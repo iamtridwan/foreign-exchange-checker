@@ -1,0 +1,8 @@
+/* Custom styling for chart transitions and guides */
+svg {
+  transition: border-color 0.2s ease;
+}
+
+svg:focus-visible {
+  outline: none;
+}

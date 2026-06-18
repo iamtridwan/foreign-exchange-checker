@@ -1,0 +1,18 @@
+<div class="w-full border-b border-neutral-600">
+    <div class="flex items-center gap-6 md:gap-8 px-2">
+        @for (tab of tabs; track tab.id) {
+        <button type="button" (click)="onTabClick(tab)" [class.border-b-2]="activeId === tab.id"
+            [class.border-secondary]="activeId === tab.id" [class.text-white]="activeId === tab.id"
+            [class.text-neutral-200]="activeId !== tab.id" [class.hover:text-white]="activeId !== tab.id"
+            class="flex items-center gap-1.5 pb-3 font-mono font-bold text-12 md:text-14 tracking-wider uppercase transition-all duration-200 cursor-pointer focus-visible:outline-none -mb-[1px]">
+            <span>{{ tab.label }}</span>
+            @if (tab.badge !== undefined && tab.badge !== null) {
+            <span
+                class="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-secondary-dark text-primary text-10 font-normal select-none">
+                {{ tab.badge }}
+            </span>
+            }
+        </button>
+        }
+    </div>
+</div>

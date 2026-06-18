@@ -1,3 +1,266 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
+  --color-neon-lime: #BEF264;
+  --color-neon-lime-dark: #84cc16;
+
+  /* Custom colors registered in Tailwind v4 theme namespace */
+  --color-lime-500: #CEF739;
+  --color-lime-800: #283300;
+  --color-green-500: #42EB05;
+  --color-red-500: #FF4141;
+  --color-neutral-900: #0A0A0A;
+  --color-neutral-700: #171719;
+  --color-neutral-600: #202022;
+  --color-neutral-500: #2E2E2E;
+  --color-neutral-400: #3D3D3D;
+  --color-neutral-300: #454547;
+  --color-neutral-200: #9D9D9D;
+  --color-neutral-100: #C6C6C6;
+  --color-neutral-50: #FFFFFF;
+
+  /* Custom text sizes registered with Tailwind v4 for responsive classes (e.g. md:text-16) */
+  --text-10: var(--font-xxsmall);
+  --text-12: var(--font-xsmall);
+  --text-14: var(--font-small);
+  --text-16: var(--font-medium);
+  --text-24: var(--font-xlarge);
+  --text-32: var(--font-xxlarge);
+  --text-40: var(--font-xxxlarge);
+  --radius-4: var(--border-radius-4);
+  --radius-8: var(--border-radius-8);
+  --radius-12: var(--border-radius-12);
+  --radius-16: var(--border-radius-16);
+  --radius-20: var(--border-radius-20);
+  --radius-24: var(--border-radius-24);
+  --radius-full: var(--border-radius-full);
+}
+
+:root {
+  --border-radius-4: 4px;
+  --border-radius-8: 8px;
+  --border-radius-12: 12px;
+  --border-radius-16: 16px;
+  --border-radius-20: 20px;
+  --border-radius-24: 24px;
+  --border-radius-full: 9999px;
+  --font-xxxlarge: 40px;
+  --font-xxlarge: 32px;
+  --font-xlarge: 20px;
+  --font-medium: 16px;
+  --font-small: 14px;
+  --font-xsmall: 12px;
+  --font-xxsmall: 10px;
+}
+
+@layer utilities {
+
+  /* Scrollbars styling for a premium dark UI feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0d0d0d;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #BEF264;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* text */
+
+.text-white {
+  color: var(--color-neutral-50);
+}
+
+.text-primary {
+  color: var(--color-lime-500);
+}
+
+.text-gray {
+  color: var(--color-neutral-200);
+}
+
+.text-dark {
+  color: var(--color-neutral-900);
+}
+
+.text-dark-400 {
+  color: var(--color-neutral-400);
+}
+
+.text-dark-100 {
+  color: var(--color-neutral-100);
+}
+
+.text-dark-500 {
+  color: var(--color-neutral-500);
+}
+
+.text-dark-300 {
+  color: var(--color-neutral-300);
+}
+
+.text-green {
+  color: var(--color-green-500);
+}
+
+.text-red {
+  color: var(--color-red-500);
+}
+
+/* background color */
+
+.bg-primary {
+  background-color: var(--color-neutral-900);
+}
+
+.bg-gray {
+  background-color: var(--color-neutral-500);
+}
+
+.bg-gray-700 {
+  background-color: var(--color-neutral-700);
+}
+
+.bg-gray-600 {
+  background-color: var(--color-neutral-600);
+}
+
+.bg-gray-400 {
+  background-color: var(--color-neutral-400);
+}
+
+.bg-gray-300 {
+  background-color: var(--color-neutral-300);
+}
+
+.bg-gray-200 {
+  background-color: var(--color-neutral-200);
+}
+
+.bg-gray-100 {
+  background-color: var(--color-neutral-100);
+}
+
+.bg-gray-50 {
+  background-color: var(--color-neutral-50);
+}
+
+.bg-green {
+  background-color: var(--color-green-500);
+}
+
+.bg-red {
+  background-color: var(--color-red-500);
+}
+
+.bg-secondary {
+  background-color: var(--color-lime-500);
+
+}
+
+.bg-secondary-dark {
+  background-color: var(--color-lime-800);
+
+}
+
+/* border */
+
+.border-gray {
+  border-color: var(--color-neutral-500);
+}
+
+.border-secondary {
+  border-color: var(--color-lime-500);
+}
+
+/* border radius */
+
+.border-4 {
+  border-radius: var(--border-radius-4);
+}
+
+.border-8 {
+  border-radius: var(--border-radius-8);
+}
+
+.border-12 {
+  border-radius: var(--border-radius-12);
+}
+
+.border-16 {
+  border-radius: var(--border-radius-16);
+}
+
+.border-20 {
+  border-radius: var(--border-radius-20);
+}
+
+.border-24 {
+  border-radius: var(--border-radius-24);
+}
+
+.border-full {
+  border-radius: var(--border-radius-full);
+}
+
+.border-neutral-900 {
+  border-color: var(--color-neutral-900);
+}
+
+.border-neutral-700 {
+  border-color: var(--color-neutral-700);
+}
+
+.border-neutral-600 {
+  border-color: var(--color-neutral-600);
+}
+
+.border-neutral-400 {
+  border-color: var(--color-neutral-400);
+}
+
+.border-neutral-200 {
+  border-color: var(--color-neutral-200);
+}
+
+.border-neutral-100 {
+  border-color: var(--color-neutral-100);
+}
+
+.border-neutral-50 {
+  border-color: var(--color-neutral-50);
+}
+
+/* animation */
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

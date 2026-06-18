@@ -1,0 +1,326 @@
+<div class="w-[90%] lg:w-[65%] mx-auto mt-12 mb-4">
+    <h2 class="font-normal text-16 lg:text-24 text-white mb-4">CHECK THE RATE</h2>
+    <div class="bg-gray-700 rounded-24 w-full border border-neutral-600">
+        <!-- Input Cards Container -->
+        <div class="flex flex-col md:flex-row items-center m-2 md:m-4 justify-between gap-4 md:gap-6 relative">
+
+            <!-- SEND Card -->
+            <div class="w-full md:w-[45%] bg-gray-600 flex flex-col gap-2 p-4 rounded-16 border border-neutral-500">
+                <p class="text-10 md:text-12 text-dark-100 mb-2 tracking-wider  font-semibold uppercase">SEND
+                </p>
+                <div class="w-full flex items-center justify-between">
+                    <!-- Amount Input -->
+                    <input type="text"
+                        class="bg-transparent border-0 text-white font-mono font-bold text-32 focus:outline-none p-0 w-2/3"
+                        [ngModel]="sendAmount()" (ngModelChange)="onSendAmountChange($event)" placeholder="0.00" />
+
+                    <!-- Currency Select Button (Wrap in relative container for dropdown alignment) -->
+                    <div class="relative">
+                        <button type="button" (click)="toggleSendPicker()"
+                            class="flex items-center gap-2 bg-gray border border-neutral-400 rounded-12 px-3 py-2 text-white hover:bg-gray-500 hover:border-zinc-500 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
+                            <img [src]="fxService.getFlagUrl(sendCurrencyInfo().flagCode)"
+                                [alt]="sendCurrency() + ' Flag'" class="w-5 h-3.5 object-cover rounded shadow-sm" />
+                            <span class="font-mono font-bold text-14">{{ sendCurrency() }}</span>
+                            <svg class="w-3.5 h-3.5 text-dark-200 transition-transform duration-200"
+                                [class.rotate-180]="isSendPickerOpen()" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Floating Picker Dropdown -->
+                        @if (isSendPickerOpen()) {
+                        <!-- Invisible overlay to detect click outside and close -->
+                        <div class="fixed inset-0 z-40 cursor-default" (click)="toggleSendPicker()"></div>
+
+                        <div
+                            class="absolute right-0 top-full mt-2 z-50 w-[320px] bg-gray-600 border border-neutral-500 rounded-8 shadow-2xl p-3 flex flex-col">
+                            <!-- Search Input -->
+                            <div class="relative mb-3">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-neutral-200" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </span>
+                                <input type="text"
+                                    class="w-full pl-9 pr-3 py-2 bg-transparent border border-neutral-50 rounded-4 text-14 text-white placeholder-neutral-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all "
+                                    placeholder="Search currencies..." [ngModel]="searchQuery()"
+                                    (ngModelChange)="searchQuery.set($event)" (click)="$event.stopPropagation()" />
+                            </div>
+
+                            <!-- Scrollable List -->
+                            <div class="max-h-[280px] overflow-y-auto pr-1 space-y-4">
+                                <!-- POPULAR Section -->
+                                @if (filteredPopular().length > 0) {
+                                <div>
+                                    <div
+                                        class="flex items-center justify-between text-10 text-neutral-200 uppercase tracking-wider mb-2  font-semibold">
+                                        <span>Popular</span>
+                                        <span>{{ filteredPopular().length }}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        @for (curr of filteredPopular(); track curr.code) {
+                                        <button type="button" (click)="selectSendCurrency(curr.code)"
+                                            class="w-full py-2 flex items-center justify-between hover:bg-neutral-600/40 rounded-8 px-2 transition-all text-left cursor-pointer group">
+                                            <div class="flex items-center gap-3">
+                                                <img [src]="fxService.getFlagUrl(curr.flagCode)"
+                                                    [alt]="curr.code + ' Flag'"
+                                                    class="w-6 h-6 rounded-full object-cover border border-neutral-600" />
+                                                <div class="flex items-baseline gap-2">
+                                                    <span
+                                                        class="text-white font-mono font-bold text-14 group-hover:text-primary transition-colors">{{
+                                                        curr.code }}</span>
+                                                    <span class="text-neutral-200 text-12 ">{{ curr.name
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            @if (curr.code === sendCurrency()) {
+                                            <span class="text-primary font-bold text-16">✓</span>
+                                            }
+                                        </button>
+                                        @if (curr.code === sendCurrency()) {
+                                        <div class="w-full border-b border-dashed border-primary/50 my-1"></div>
+                                        }
+                                        }
+                                    </div>
+                                </div>
+                                }
+
+                                <!-- OTHER CURRENCIES Section -->
+                                @if (filteredOthers().length > 0) {
+                                <div class="pt-2 border-t border-neutral-600">
+                                    <div
+                                        class="flex items-center justify-between text-10 text-neutral-200 uppercase tracking-wider mb-2  font-semibold">
+                                        <span>Other Currencies</span>
+                                        <span>{{ filteredOthers().length }}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        @for (curr of filteredOthers(); track curr.code) {
+                                        <button type="button" (click)="selectSendCurrency(curr.code)"
+                                            class="w-full py-2 flex items-center justify-between hover:bg-neutral-600/40 rounded-8 px-2 transition-all text-left cursor-pointer group">
+                                            <div class="flex items-center gap-3">
+                                                <img [src]="fxService.getFlagUrl(curr.flagCode)"
+                                                    [alt]="curr.code + ' Flag'"
+                                                    class="w-6 h-6 rounded-full object-cover border border-neutral-600" />
+                                                <div class="flex items-baseline gap-2">
+                                                    <span
+                                                        class="text-white font-mono font-bold text-14 group-hover:text-primary transition-colors">{{
+                                                        curr.code }}</span>
+                                                    <span class="text-neutral-200 text-12 ">{{ curr.name
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            @if (curr.code === sendCurrency()) {
+                                            <span class="text-primary font-bold text-16">✓</span>
+                                            }
+                                        </button>
+                                        @if (curr.code === sendCurrency()) {
+                                        <div class="w-full border-b border-dashed border-primary/50 my-1"></div>
+                                        }
+                                        }
+                                    </div>
+                                </div>
+                                }
+
+                                @if (filteredPopular().length === 0 && filteredOthers().length === 0) {
+                                <div class="p-6 text-center text-neutral-200 text-12 ">
+                                    No currencies match search
+                                </div>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Swap Button in the middle -->
+            <div class="flex items-center justify-center z-10 my-2 md:my-0">
+                <button type="button" (click)="swapCurrencies()"
+                    class="w-12 h-12 bg-gray-600 border border-neutral-500 hover:border-neutral-300 text-white rounded-12 flex items-center justify-center hover:bg-gray-500 transition-all cursor-pointer shadow-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                    aria-label="Swap Currencies">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- RECEIVE Card -->
+            <div class="w-full md:w-[45%] bg-gray-600 flex flex-col gap-2 p-4 rounded-16 border border-neutral-500">
+                <p class="text-10 md:text-12 text-dark-100 tracking-wider">RECEIVE</p>
+                <div class="w-full flex items-center justify-between">
+                    <!-- Converted Amount -->
+                    <input type="text"
+                        class="bg-transparent border-0 text-primary font-mono font-bold text-32 focus:outline-none p-0 w-2/3"
+                        [ngModel]="receiveAmount()" (ngModelChange)="onReceiveAmountChange($event)"
+                        placeholder="0.00" />
+
+                    <!-- Currency Select Button (Wrap in relative container for dropdown alignment) -->
+                    <div class="relative">
+                        <button type="button" (click)="toggleReceivePicker()"
+                            class="flex items-center gap-2 bg-gray border border-neutral-400 rounded-12 px-3 py-2 text-white hover:bg-gray-500 hover:border-zinc-500 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
+                            <img [src]="fxService.getFlagUrl(receiveCurrencyInfo().flagCode)"
+                                [alt]="receiveCurrency() + ' Flag'" class="w-5 h-3.5 object-cover rounded shadow-sm" />
+                            <span class="font-mono font-bold text-14">{{ receiveCurrency() }}</span>
+                            <svg class="w-3.5 h-3.5 text-dark-200 transition-transform duration-200"
+                                [class.rotate-180]="isReceivePickerOpen()" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Floating Picker Dropdown -->
+                        @if (isReceivePickerOpen()) {
+                        <!-- Invisible overlay to detect click outside and close -->
+                        <div class="fixed inset-0 z-40 cursor-default" (click)="toggleReceivePicker()"></div>
+
+                        <div
+                            class="absolute right-0 top-full mt-2 z-50 w-[320px] bg-gray-600 border border-neutral-500 rounded-8 shadow-2xl p-3 flex flex-col">
+                            <!-- Search Input -->
+                            <div class="relative mb-3">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-neutral-200" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </span>
+                                <input type="text"
+                                    class="w-full pl-9 pr-3 py-2 bg-transparent border border-neutral-50 rounded-4 text-14 text-white placeholder-neutral-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all "
+                                    placeholder="Search currencies..." [ngModel]="searchQuery()"
+                                    (ngModelChange)="searchQuery.set($event)" (click)="$event.stopPropagation()" />
+                            </div>
+
+                            <!-- Scrollable List -->
+                            <div class="max-h-[280px] overflow-y-auto pr-1 space-y-4">
+                                <!-- POPULAR Section -->
+                                @if (filteredPopular().length > 0) {
+                                <div>
+                                    <div
+                                        class="flex items-center justify-between text-10 text-neutral-200 uppercase tracking-wider mb-2  font-semibold">
+                                        <span>Popular</span>
+                                        <span>{{ filteredPopular().length }}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        @for (curr of filteredPopular(); track curr.code) {
+                                        <button type="button" (click)="selectReceiveCurrency(curr.code)"
+                                            class="w-full py-2 flex items-center justify-between hover:bg-neutral-600/40 rounded-8 px-2 transition-all text-left cursor-pointer group">
+                                            <div class="flex items-center gap-3">
+                                                <img [src]="fxService.getFlagUrl(curr.flagCode)"
+                                                    [alt]="curr.code + ' Flag'"
+                                                    class="w-6 h-6 rounded-full object-cover border border-neutral-600" />
+                                                <div class="flex items-baseline gap-2">
+                                                    <span
+                                                        class="text-white font-mono font-bold text-14 group-hover:text-primary transition-colors">{{
+                                                        curr.code }}</span>
+                                                    <span class="text-neutral-200 text-12 ">{{ curr.name
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            @if (curr.code === receiveCurrency()) {
+                                            <span class="text-primary font-bold text-16">✓</span>
+                                            }
+                                        </button>
+                                        @if (curr.code === receiveCurrency()) {
+                                        <div class="w-full border-b border-dashed border-primary/50 my-1"></div>
+                                        }
+                                        }
+                                    </div>
+                                </div>
+                                }
+
+                                <!-- OTHER CURRENCIES Section -->
+                                @if (filteredOthers().length > 0) {
+                                <div class="pt-2 border-t border-neutral-600">
+                                    <div
+                                        class="flex items-center justify-between text-10 text-neutral-200 uppercase tracking-wider mb-2  font-semibold">
+                                        <span>Other Currencies</span>
+                                        <span>{{ filteredOthers().length }}</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        @for (curr of filteredOthers(); track curr.code) {
+                                        <button type="button" (click)="selectReceiveCurrency(curr.code)"
+                                            class="w-full py-2 flex items-center justify-between hover:bg-neutral-600/40 rounded-8 px-2 transition-all text-left cursor-pointer group">
+                                            <div class="flex items-center gap-3">
+                                                <img [src]="fxService.getFlagUrl(curr.flagCode)"
+                                                    [alt]="curr.code + ' Flag'"
+                                                    class="w-6 h-6 rounded-full object-cover border border-neutral-600" />
+                                                <div class="flex items-baseline gap-2">
+                                                    <span
+                                                        class="text-white font-mono font-bold text-14 group-hover:text-primary transition-colors">{{
+                                                        curr.code }}</span>
+                                                    <span class="text-neutral-200 text-12 ">{{ curr.name
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            @if (curr.code === receiveCurrency()) {
+                                            <span class="text-primary font-bold text-16">✓</span>
+                                            }
+                                        </button>
+                                        @if (curr.code === receiveCurrency()) {
+                                        <div class="w-full border-b border-dashed border-primary/50 my-1"></div>
+                                        }
+                                        }
+                                    </div>
+                                </div>
+                                }
+
+                                @if (filteredPopular().length === 0 && filteredOthers().length === 0) {
+                                <div class="p-6 text-center text-neutral-200 text-12 ">
+                                    No currencies match search
+                                </div>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Dashed Separator -->
+        <hr class="border-t-2 border-dashed border-neutral-500 my-6 w-full" />
+
+        <!-- Bottom Actions Row -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2 pb-2 md:px-4 md:pb-4">
+            <!-- Rate Text (1 USD = 0.8530 EUR) -->
+            <div class="text-neutral-100 text-12 md:text-14 font-mono select-none text-center md:text-left">
+                1 {{ sendCurrency() }} = {{ liveRate() | number:'1.2-4' }} {{ receiveCurrency() }}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-center gap-3">
+                <!-- Favorite Button -->
+                <button type="button" (click)="toggleFavorite()" [class.bg-secondary]="isFavorited()"
+                    [class.text-dark]="isFavorited()" [class.bg-transparent]="!isFavorited()"
+                    [class.border]="!isFavorited()" [class.border-neutral-400]="!isFavorited()"
+                    [class.text-white]="!isFavorited()"
+                    class="flex items-center gap-2 font-mono font-bold text-10 md:text-12 uppercase px-4 py-2.5 rounded-12 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16" class="w-4 h-4">
+                        @if (isFavorited()) {
+                        <path
+                            d="M7.332 2.41c.281-.562 1.078-.538 1.336 0l1.547 3.118 3.422.492c.61.094.843.844.398 1.29l-2.46 2.413.585 3.399c.094.61-.562 1.078-1.101.797l-3.047-1.617-3.07 1.617c-.54.28-1.196-.188-1.102-.797l.586-3.399L1.965 7.31c-.446-.445-.211-1.195.398-1.289l3.446-.492z" />
+                        } @else {
+                        <path
+                            d="M13.637 6.02c.61.094.843.844.398 1.29l-2.46 2.413.585 3.399c.094.61-.562 1.078-1.101.797l-3.047-1.617-3.07 1.617c-.54.28-1.196-.188-1.102-.797l.586-3.399L1.965 7.31c-.446-.445-.211-1.195.398-1.289l3.446-.492 1.523-3.117c.281-.563 1.078-.54 1.336 0l1.547 3.117zm-3.282 3.305 2.368-2.297-3.258-.469-1.453-2.953L6.535 6.56l-3.258.469 2.367 2.297-.562 3.234 2.93-1.523 2.906 1.523z" />
+                        }
+                    </svg>
+                    <span>{{ isFavorited() ? 'FAVORITED' : 'FAVORITE' }}</span>
+                </button>
+
+                <!-- Log Conversion Button -->
+                <button type="button" (click)="logConversion()"
+                    class="border border-secondary text-white hover:bg-secondary hover:text-dark font-mono font-bold text-10 md:text-12 uppercase px-4 py-2.5 rounded-12 bg-transparent transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
+                    LOG CONVERSION
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
