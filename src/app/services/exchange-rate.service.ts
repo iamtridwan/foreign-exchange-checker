@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal, computed } from '@angular/core';
 
 export interface CurrencyInfo {
   code: string;
@@ -170,12 +170,51 @@ export class ExchangeRateService {
   public lastActiveTab: WritableSignal<string> = signal('history');
   public sendCurrency = signal<string>('USD');
   public receiveCurrency = signal<string>('EUR');
+  public sendAmount = signal<string>('1000');
 
   // Cached USD-based rates for global ticker/favorites calculations
   public latestRatesUSD = signal<{ [key: string]: number }>({});
   public prevRatesUSD = signal<{ [key: string]: number }>({});
 
+  public favoritesWithRates = computed(() => {
+    const favs = this.favorites();
+    const latestUSD = this.latestRatesUSD();
+    const prevUSD = this.prevRatesUSD();
+
+    if (Object.keys(latestUSD).length === 0) return [];
+
+    return favs.map(f => {
+      const rateA = latestUSD[f.base] || 1.0;
+      const rateB = latestUSD[f.symbol] || 1.0;
+      const prevRateA = prevUSD[f.base] || 1.0;
+      const prevRateB = prevUSD[f.symbol] || 1.0;
+
+      // Rate A/B is Rate(B)/Rate(A) when base is USD
+      const currentRate = rateB / rateA;
+      const prevRate = prevRateB / prevRateA;
+
+      const change = currentRate - prevRate;
+      const changePercent = prevRate !== 0 ? (change / prevRate) * 100 : 0;
+
+      const baseFlag = this.currencyFlags[f.base] || 'us';
+      const symbolFlag = this.currencyFlags[f.symbol] || 'eu';
+
+      return {
+        ...f,
+        rate: currentRate,
+        change,
+        changePercent,
+        isUp: change >= 0,
+        baseFlag,
+        symbolFlag
+      };
+    });
+  });
+
   constructor() {
+    // Pre-populate with fallback rates so favorites computed signal has values immediately
+    this.latestRatesUSD.set(this.getFallbackRates('USD'));
+    this.prevRatesUSD.set(this.getFallbackRates('USD'));
     this.loadFromStorage();
   }
 
@@ -199,9 +238,38 @@ export class ExchangeRateService {
     localStorage.setItem('fx_favorites', JSON.stringify(favs));
   }
 
+  public removeFavorite(id: string): void {
+    const favs = this.favorites().filter(f => f.id !== id);
+    this.saveFavorites(favs);
+  }
+
   public saveConversionLog(logs: ConversionLogEntry[]): void {
     this.conversionLog.set(logs);
     localStorage.setItem('fx_logs', JSON.stringify(logs));
+  }
+
+  public addConversionLogEntry(fromCurrency: string, toCurrency: string, fromAmount: number, toAmount: number): void {
+    const logs = [...this.conversionLog()];
+    const entry: ConversionLogEntry = {
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: Date.now(),
+      fromCurrency,
+      toCurrency,
+      fromAmount,
+      toAmount
+    };
+    logs.unshift(entry);
+    if (logs.length > 50) logs.pop();
+    this.saveConversionLog(logs);
+  }
+
+  public deleteConversionLogEntry(id: string): void {
+    const logs = this.conversionLog().filter(l => l.id !== id);
+    this.saveConversionLog(logs);
+  }
+
+  public clearConversionLog(): void {
+    this.saveConversionLog([]);
   }
 
   public saveLastTab(tab: string): void {

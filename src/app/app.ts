@@ -1,14 +1,13 @@
 import { Component, OnInit, signal, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs';
+import { Router, RouterOutlet, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { Header } from './components/header/header';
 // import { CurrencyPickerComponent } from './components/currency-picker/currency-picker.component';
 import { ExchangePicker } from './components/exchange-picker/exchange-picker';
 import { TabItem, TabsComponent } from './components/tabs/tabs';
 // import { RateHistoryChartComponent } from './components/rate-history-chart/rate-history-chart.component';
-// import { ExchangeRateService, CurrencyInfo, FavoritePair, ConversionLogEntry } from './services/exchange-rate.service';
+import { ExchangeRateService, CurrencyInfo, FavoritePair, ConversionLogEntry } from './services/exchange-rate.service';
 
 @Component({
   selector: 'app-root',
@@ -29,30 +28,35 @@ import { TabItem, TabsComponent } from './components/tabs/tabs';
 })
 export class App implements OnInit {
   private router = inject(Router);
-  tabs: TabItem[] = [
-    {
-      id: 'history',
-      label: 'History',
-      route: "history",
-    },
-    {
-      id: 'compare',
-      label: 'COMPARE',
-      route: "compare",
-    },
-    {
-      id: 'favorites',
-      label: 'FAVORITES',
-      badge: 0,
-      route: "favorites"
-    },
-    {
-      id: 'logs',
-      label: 'Log',
-      badge: 0,
-      route: "log"
-    },
-  ];
+  public fxService = inject(ExchangeRateService);
+  public isNavigating = signal<boolean>(false);
+
+  get tabs(): TabItem[] {
+    return [
+      {
+        id: 'history',
+        label: 'History',
+        route: "history",
+      },
+      {
+        id: 'compare',
+        label: 'COMPARE',
+        route: "compare",
+      },
+      {
+        id: 'favorites',
+        label: 'FAVORITES',
+        badge: this.fxService.favorites().length,
+        route: "favorites"
+      },
+      {
+        id: 'logs',
+        label: 'Log',
+        badge: this.fxService.conversionLog().length,
+        route: "log"
+      },
+    ];
+  }
   activeTab = 'history';
 
   public onTabChange(tab: TabItem) {
@@ -178,11 +182,20 @@ export class App implements OnInit {
     // 1. Set initial active tab based on initial URL
     this.updateActiveTab(this.router.url);
 
-    // 2. Subscribe to router events to update active tab on navigation
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      this.updateActiveTab(event.urlAfterRedirects);
+    // 2. Subscribe to router events to toggle loaders and active tab
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.isNavigating.set(true);
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.isNavigating.set(false);
+        if (event instanceof NavigationEnd) {
+          this.updateActiveTab(event.urlAfterRedirects);
+        }
+      }
     });
   }
 

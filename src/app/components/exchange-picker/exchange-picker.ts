@@ -19,8 +19,16 @@ export class ExchangePicker implements OnInit {
   // Active converter variables
   public sendCurrency!: WritableSignal<string>;
   public receiveCurrency!: WritableSignal<string>;
-  public sendAmount = signal<string>('1000');
-  public receiveAmount = signal<string>('');
+  public sendAmount!: WritableSignal<string>;
+
+  // Computed Receive Amount based on Send Amount and Live Rate
+  public receiveAmount = computed(() => {
+    const amt = Number(this.sendAmount());
+    if (isNaN(amt) || this.sendAmount() === '') {
+      return '';
+    }
+    return (amt * this.liveRate()).toFixed(2);
+  });
 
   // Rates mapping
   public ratesMap = signal<{ [key: string]: number }>({});
@@ -75,6 +83,7 @@ export class ExchangePicker implements OnInit {
   constructor(public fxService: ExchangeRateService) {
     this.sendCurrency = this.fxService.sendCurrency;
     this.receiveCurrency = this.fxService.receiveCurrency;
+    this.sendAmount = this.fxService.sendAmount;
     // Re-fetch rates automatically whenever base currency changes
     effect(() => {
       this.fetchRates();
@@ -99,59 +108,83 @@ export class ExchangePicker implements OnInit {
       const res = await this.fxService.fetchLatestRates(base);
       const rates = { ...res.rates, [base]: 1.0 };
       this.ratesMap.set(rates);
-      this.recalculateReceive();
     } catch (e) {
       console.warn('API error, falling back to static offline rates', e);
       this.isError.set(true);
       const fallback = this.fxService.getFallbackRates(base);
       this.ratesMap.set(fallback);
-      this.recalculateReceive();
     } finally {
       this.isLoading.set(false);
     }
   }
 
   public onSendAmountChange(val: string): void {
-    const cleaned = val.replace(/,/g, '');
+    let cleaned = val.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
     this.sendAmount.set(cleaned);
-    this.recalculateReceive();
   }
 
-  public onReceiveAmountChange(val: string): void {
-    const cleaned = val.replace(/,/g, '');
-    this.receiveAmount.set(cleaned);
-    this.recalculateSend();
+  public formatWithCommas(val: string): string {
+    if (!val) return '';
+    const clean = val.replace(/,/g, '');
+    const parts = clean.split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
   }
 
-  private recalculateReceive(): void {
-    const amt = Number(this.sendAmount());
-    if (isNaN(amt) || this.sendAmount() === '') {
-      this.receiveAmount.set('');
+  public onKeydown(event: KeyboardEvent): void {
+    const allowedKeys = [
+      'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End',
+      'Enter', 'Escape', 'a', 'c', 'v', 'x'
+    ];
+    const isCtrl = event.ctrlKey || event.metaKey;
+
+    if (allowedKeys.includes(event.key) || (isCtrl && ['a', 'c', 'v', 'x'].includes(event.key.toLowerCase()))) {
       return;
     }
-    this.receiveAmount.set((amt * this.liveRate()).toFixed(2));
-  }
 
-  private recalculateSend(): void {
-    const amt = Number(this.receiveAmount());
-    if (isNaN(amt) || this.receiveAmount() === '') {
-      this.sendAmount.set('');
+    if (event.key === '.') {
+      const val = (event.target as HTMLInputElement).value;
+      if (val.includes('.')) {
+        event.preventDefault();
+      }
       return;
     }
-    const rate = this.liveRate();
-    if (rate > 0) {
-      this.sendAmount.set((amt / rate).toFixed(2));
+
+    if (!/[0-9]/.test(event.key)) {
+      event.preventDefault();
     }
   }
+
+  public onPaste(event: ClipboardEvent): void {
+    const data = event.clipboardData?.getData('text') || '';
+    const clean = data.replace(/,/g, '');
+    if (!/^[0-9]*\.?[0-9]*$/.test(clean)) {
+      event.preventDefault();
+    }
+  }
+
+  public getFontSizeClass(amount: string): string {
+    const formatted = this.formatWithCommas(amount);
+    const len = formatted ? formatted.length : 0;
+    if (len <= 8) return 'text-32';
+    if (len <= 12) return 'text-24';
+    if (len <= 16) return 'text-16';
+    return 'text-12';
+  }
+
+
 
   public swapCurrencies(): void {
     const tempCurr = this.sendCurrency();
-    const tempAmt = this.sendAmount();
+    const tempAmt = this.receiveAmount();
 
     this.sendCurrency.set(this.receiveCurrency());
     this.receiveCurrency.set(tempCurr);
-    this.sendAmount.set(this.receiveAmount());
-    this.receiveAmount.set(tempAmt);
+    this.sendAmount.set(tempAmt);
   }
 
   public toggleSendPicker(): void {
@@ -179,10 +212,36 @@ export class ExchangePicker implements OnInit {
   }
 
   public toggleFavorite(): void {
-    // Will implement functionality later
+    const base = this.sendCurrency();
+    const symbol = this.receiveCurrency();
+    const favs = [...this.fxService.favorites()];
+    const index = favs.findIndex(f => f.base === base && f.symbol === symbol);
+
+    if (index >= 0) {
+      favs.splice(index, 1);
+    } else {
+      favs.push({
+        id: `${base}-${symbol}`,
+        base,
+        symbol
+      });
+    }
+    this.fxService.saveFavorites(favs);
   }
 
   public logConversion(): void {
-    // Will implement functionality later
+    const fromAmt = Number(this.sendAmount());
+    const toAmt = Number(this.receiveAmount());
+
+    if (isNaN(fromAmt) || fromAmt <= 0 || isNaN(toAmt) || toAmt <= 0) {
+      return;
+    }
+
+    this.fxService.addConversionLogEntry(
+      this.sendCurrency(),
+      this.receiveCurrency(),
+      fromAmt,
+      toAmt
+    );
   }
 }

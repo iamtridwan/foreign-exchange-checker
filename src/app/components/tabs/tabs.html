@@ -4,7 +4,7 @@
         <button type="button" (click)="onTabClick(tab)" [class.border-b-2]="activeId === tab.id"
             [class.border-secondary]="activeId === tab.id" [class.text-white]="activeId === tab.id"
             [class.text-neutral-200]="activeId !== tab.id" [class.hover:text-white]="activeId !== tab.id"
-            class="flex items-center gap-1.5 pb-3 font-mono font-bold text-12 md:text-14 tracking-wider uppercase transition-all duration-200 cursor-pointer focus-visible:outline-none -mb-[1px]">
+            class="flex items-center gap-1.5 pb-3 font-bold text-12 md:text-14 tracking-wider uppercase transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 rounded-4 px-1 -mb-[1px]">
             <span>{{ tab.label }}</span>
             @if (tab.badge !== undefined && tab.badge !== null) {
             <span

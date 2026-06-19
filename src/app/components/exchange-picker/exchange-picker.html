@@ -11,8 +11,11 @@
                 <div class="w-full flex items-center justify-between">
                     <!-- Amount Input -->
                     <input type="text"
-                        class="bg-transparent border-0 text-white font-mono font-bold text-32 focus:outline-none p-0 w-2/3"
-                        [ngModel]="sendAmount()" (ngModelChange)="onSendAmountChange($event)" placeholder="0.00" />
+                        class="bg-transparent border-0 text-white font-mono font-bold focus:outline-none p-0 w-2/3"
+                        [ngModel]="formatWithCommas(sendAmount())" (ngModelChange)="onSendAmountChange($event)"
+                        (keydown)="onKeydown($event)" (paste)="onPaste($event)"
+                        [ngClass]="getFontSizeClass(sendAmount())"
+                        placeholder="0.00" />
 
                     <!-- Currency Select Button (Wrap in relative container for dropdown alignment) -->
                     <div class="relative">
@@ -155,8 +158,10 @@
                 <div class="w-full flex items-center justify-between">
                     <!-- Converted Amount -->
                     <input type="text"
-                        class="bg-transparent border-0 text-primary font-mono font-bold text-32 focus:outline-none p-0 w-2/3"
-                        [ngModel]="receiveAmount()" (ngModelChange)="onReceiveAmountChange($event)"
+                        class="bg-transparent border-0 text-primary font-mono font-bold focus:outline-none p-0 w-2/3"
+                        [ngModel]="formatWithCommas(receiveAmount())"
+                        readonly
+                        [ngClass]="getFontSizeClass(receiveAmount())"
                         placeholder="0.00" />
 
                     <!-- Currency Select Button (Wrap in relative container for dropdown alignment) -->

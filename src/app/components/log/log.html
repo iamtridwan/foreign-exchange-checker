@@ -1,1 +1,71 @@
-<app-empty [title]="title" [description]="description"></app-empty>
+<div class="mx-auto mt-12 mb-4">
+    <div>
+        @if (fxService.conversionLog().length === 0) {
+        <app-empty [title]="title" [description]="description"></app-empty>
+        } @else {
+        <div class="bg-gray-700 rounded-24 w-full border border-neutral-600 p-4 md:p-6">
+            <!-- Header Row -->
+            <div class="flex items-center justify-between mb-6 px-1">
+                <h2 class="font-bold text-12 md:text-14 text-white tracking-widest font-mono uppercase">CONVERSION LOG</h2>
+                <div class="flex items-center gap-4">
+                    <span class="text-10 md:text-12 font-mono text-neutral-200 uppercase tracking-wider select-none">
+                        {{ fxService.conversionLog().length }} {{ fxService.conversionLog().length === 1 ? 'LOGGED' : 'LOGGED' }}
+                    </span>
+                    <button type="button" (click)="clearAll()"
+                        class="border border-neutral-400 text-white font-mono font-bold text-10 md:text-12 uppercase px-3 py-1.5 rounded-8 hover:bg-neutral-500/20 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
+                        CLEAR ALL
+                    </button>
+                </div>
+            </div>
+
+            <!-- List Stack -->
+            <div class="flex flex-col gap-3">
+                @for (entry of fxService.conversionLog(); track entry.id) {
+                <div
+                    class="bg-gray-600 rounded-16 p-4 md:p-5 border border-neutral-500 hover:border-neutral-400 transition-all flex items-center justify-between">
+                    <!-- Left side: Relative Time & Pair -->
+                    <div class="flex items-center gap-6 md:gap-12 select-none">
+                        <span class="font-mono text-12 md:text-14 text-neutral-200 min-w-[50px]">{{ getRelativeTime(entry.timestamp) }}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono font-bold text-14 md:text-16 text-white uppercase">{{ entry.fromCurrency }}</span>
+                            <!-- Small arrow -->
+                            <svg class="w-4 h-4 text-neutral-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            <span class="font-mono font-bold text-14 md:text-16 text-white uppercase">{{ entry.toCurrency }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Right side: Amounts & Delete button -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-baseline gap-3">
+                            <span class="font-mono text-14 md:text-16 text-white font-semibold">
+                                {{ entry.fromAmount | number:'1.2-2' }}
+                            </span>
+                            <span class="font-mono font-bold text-14 md:text-18 text-primary">
+                                {{ entry.toAmount | number:'1.2-2' }}
+                            </span>
+                        </div>
+
+                        <!-- Delete Button -->
+                        <button type="button" (click)="deleteEntry(entry.id)"
+                            class="w-10 h-10 rounded-12 border border-neutral-400 text-neutral-200 flex items-center justify-center hover:bg-red hover:border-red hover:text-white transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                            aria-label="Delete entry">
+                            <!-- Trash icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16" class="w-4 h-4">
+                                <path
+                                    d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
+                                <path
+                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</div>

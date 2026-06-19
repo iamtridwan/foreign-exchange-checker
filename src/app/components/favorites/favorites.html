@@ -1,1 +1,64 @@
-<app-empty [title]="title" [description]="description"></app-empty>
+<div class="mx-auto mt-12 mb-4">
+    <div>
+        @if (fxService.favorites().length === 0) {
+        <app-empty [title]="title" [description]="description"></app-empty>
+        } @else {
+        <div class="bg-gray-700 rounded-24 w-full border border-neutral-600 p-4 md:p-6">
+            <div class="flex items-center justify-between mb-6 px-1">
+                <h2 class="font-bold text-12 md:text-14 text-white tracking-widest font-mono uppercase">PINNED PAIRS
+                </h2>
+                <span class="text-10 md:text-12 font-mono text-neutral-200 uppercase tracking-wider">
+                    {{ fxService.favorites().length }} {{ fxService.favorites().length === 1 ? 'FAVORITE' : 'FAVORITES'
+                    }}
+                </span>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                @for (item of fxService.favoritesWithRates(); track item.id) {
+                <div
+                    class="bg-gray-600 rounded-16 p-4 md:p-5 border border-neutral-500 hover:border-neutral-400 transition-all flex items-center justify-between">
+                    <!-- Left side: Pair symbols -->
+                    <div class="flex items-center gap-3 select-none">
+                        <span class="font-mono font-bold text-14 md:text-16 text-white uppercase">{{ item.base }}</span>
+                        <!-- Small arrow -->
+                        <svg class="w-4 h-4 text-neutral-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                        <span class="font-mono font-bold text-14 md:text-16 text-white uppercase">{{ item.symbol
+                            }}</span>
+                    </div>
+
+                    <!-- Right side: Rate, Change, and Unpin button -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex flex-col items-end gap-0.5">
+                            <span class="font-mono font-bold text-14 md:text-18 text-white">
+                                {{ item.rate | number:'1.2-4' }}
+                            </span>
+                            <span class="font-mono font-bold text-10 md:text-12 flex items-center gap-0.5"
+                                [class.text-green]="item.isUp" [class.text-red]="!item.isUp">
+                                {{ item.isUp ? '▲' : '▼' }} {{ item.isUp ? '+' : '' }}{{ item.changePercent |
+                                number:'1.2-2'
+                                }}%
+                            </span>
+                        </div>
+
+                        <!-- Unpin Favorite Button -->
+                        <button type="button" (click)="unpinFavorite(item.id)"
+                            class="w-10 h-10 rounded-12 border border-secondary text-primary flex items-center justify-center bg-secondary-dark/5 hover:bg-secondary hover:text-dark transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                            aria-label="Unpin favorite">
+                            <!-- Star icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16" class="w-4 h-4">
+                                <path
+                                    d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</div>
