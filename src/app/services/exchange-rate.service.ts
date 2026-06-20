@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal, computed } from '@angular/core';
+import { Injectable, signal, WritableSignal, computed, effect } from '@angular/core';
 
 export interface CurrencyInfo {
   code: string;
@@ -18,6 +18,15 @@ export interface FavoritePair {
   id: string; // e.g. "USD-EUR"
   base: string;
   symbol: string;
+  threshold?: number;
+  thresholdType?: 'above' | 'below';
+}
+
+export interface ToastMessage {
+  id: string;
+  title: string;
+  message: string;
+  type: 'success' | 'warning' | 'info';
 }
 
 export interface ConversionLogEntry {
@@ -171,6 +180,9 @@ export class ExchangeRateService {
   public sendCurrency = signal<string>('USD');
   public receiveCurrency = signal<string>('EUR');
   public sendAmount = signal<string>('1000');
+  public theme = signal<'light' | 'dark' | 'system'>('system');
+  public toasts = signal<ToastMessage[]>([]);
+  private triggeredAlerts = new Set<string>();
 
   // Cached USD-based rates for global ticker/favorites calculations
   public latestRatesUSD = signal<{ [key: string]: number }>({});
@@ -186,8 +198,8 @@ export class ExchangeRateService {
     return favs.map(f => {
       const rateA = latestUSD[f.base] || 1.0;
       const rateB = latestUSD[f.symbol] || 1.0;
-      const prevRateA = prevUSD[f.base] || 1.0;
-      const prevRateB = prevUSD[f.symbol] || 1.0;
+      const prevRateA = prevUSD[f.base] || rateA;
+      const prevRateB = prevUSD[f.symbol] || rateB;
 
       // Rate A/B is Rate(B)/Rate(A) when base is USD
       const currentRate = rateB / rateA;
@@ -211,11 +223,32 @@ export class ExchangeRateService {
     });
   });
 
+  private mediaQueryListener = (e: MediaQueryListEvent) => {
+    if (this.theme() === 'system') {
+      this.applyTheme();
+    }
+  };
+
   constructor() {
     // Pre-populate with fallback rates so favorites computed signal has values immediately
     this.latestRatesUSD.set(this.getFallbackRates('USD'));
     this.prevRatesUSD.set(this.getFallbackRates('USD'));
     this.loadFromStorage();
+    this.applyTheme();
+
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', this.mediaQueryListener);
+      } else {
+        mediaQuery.addListener(this.mediaQueryListener);
+      }
+    }
+
+    // Check thresholds when favorites or rates change
+    effect(() => {
+      this.checkThresholds();
+    });
   }
 
   private loadFromStorage(): void {
@@ -228,6 +261,9 @@ export class ExchangeRateService {
 
       const tab = localStorage.getItem('fx_last_tab');
       if (tab) this.lastActiveTab.set(tab);
+
+      const themeVal = localStorage.getItem('fx_theme') as 'light' | 'dark' | 'system' | null;
+      if (themeVal) this.theme.set(themeVal);
     } catch (e) {
       console.error('Failed to load from storage', e);
     }
@@ -277,6 +313,33 @@ export class ExchangeRateService {
     localStorage.setItem('fx_last_tab', tab);
   }
 
+  public setTheme(newTheme: 'light' | 'dark' | 'system'): void {
+    this.theme.set(newTheme);
+    localStorage.setItem('fx_theme', newTheme);
+    this.applyTheme();
+  }
+
+  public applyTheme(): void {
+    const current = this.theme();
+    let isLight = false;
+
+    if (current === 'light') {
+      isLight = true;
+    } else if (current === 'dark') {
+      isLight = false;
+    } else {
+      isLight = typeof window !== 'undefined' && window.matchMedia
+        ? !window.matchMedia('(prefers-color-scheme: dark)').matches
+        : true;
+    }
+
+    if (isLight) {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  }
+
   // Get full list of support currencies sorted
   public getSupportedCurrencies(): CurrencyInfo[] {
     return Object.keys(this.currencyNames).map(code => ({
@@ -295,64 +358,64 @@ export class ExchangeRateService {
   public getFallbackRates(base: string): { [key: string]: number } {
     const usdRates: { [key: string]: number } = {
       USD: 1.0,
-      EUR: 0.8625,
-      GBP: 0.7458,
-      JPY: 160.31,
-      AUD: 1.4164,
-      CAD: 1.4012,
-      CHF: 0.7931,
-      CNY: 6.7595,
-      NZD: 1.7213,
-      SEK: 9.3961,
-      NOK: 9.4970,
-      DKK: 6.4489,
-      TRY: 46.3170,
-      KRW: 1517.08,
-      SGD: 1.2834,
-      HKD: 7.8355,
-      INR: 94.53,
-      MXN: 17.2105,
-      ZAR: 16.2217,
-      BRL: 5.0840,
-      PLN: 3.6589,
-      RON: 4.5138,
-      BGN: 1.7825,
-      CZK: 20.833,
-      HUF: 301.68,
-      IDR: 17803,
-      ILS: 2.9207,
-      ISK: 124.58,
-      MYR: 4.0680,
-      PHP: 60.4380,
-      THB: 32.6150,
+      EUR: 0.871922,
+      GBP: 0.756016,
+      JPY: 161.262861,
+      AUD: 1.425738,
+      CAD: 1.415087,
+      CHF: 0.8068,
+      CNY: 6.784364,
+      NZD: 1.742016,
+      SEK: 9.578776,
+      NOK: 9.689639,
+      DKK: 6.507902,
+      TRY: 46.452725,
+      KRW: 1530.435528,
+      SGD: 1.29121,
+      HKD: 7.837577,
+      INR: 94.431191,
+      MXN: 17.333485,
+      ZAR: 16.4574,
+      BRL: 5.155704,
+      PLN: 3.711653,
+      RON: 4.569495,
+      BGN: 1.705329,
+      CZK: 21.108383,
+      HUF: 306.958291,
+      IDR: 17785.842497,
+      ILS: 2.95815,
+      ISK: 125.66025,
+      MYR: 4.133145,
+      PHP: 60.742636,
+      THB: 32.877552,
       AED: 3.6725,
-      ARS: 900.50,
-      BDT: 117.50,
-      BHD: 0.3760,
-      CLP: 925.00,
-      COP: 4150.00,
-      EGP: 47.80,
-      GHS: 11.20,
-      HNL: 24.70,
-      HRK: 7.02,
-      HTG: 132.50,
-      JOD: 0.7090,
-      KES: 129.00,
-      KWD: 0.3070,
-      LBP: 89500.00,
-      LKR: 302.00,
-      MAD: 9.95,
-      NGN: 1505.00,
-      NPR: 133.50,
-      OMR: 0.3845,
-      PEN: 3.75,
-      PKR: 278.50,
+      ARS: 1460.2498,
+      BDT: 122.440896,
+      BHD: 0.376,
+      CLP: 899.861454,
+      COP: 3480.559735,
+      EGP: 49.920476,
+      GHS: 11.340887,
+      HNL: 27.109241,
+      HRK: 6.569488,
+      HTG: 132.08376,
+      JOD: 0.709,
+      KES: 129.458977,
+      KWD: 0.309765,
+      LBP: 89500,
+      LKR: 333.788859,
+      MAD: 9.308871,
+      NGN: 1366.657476,
+      NPR: 151.089584,
+      OMR: 0.384497,
+      PEN: 3.419107,
+      PKR: 280.398591,
       QAR: 3.64,
-      RUB: 89.50,
+      RUB: 73.337433,
       SAR: 3.75,
-      TWD: 32.40,
-      UAH: 40.50,
-      VND: 25450.00
+      TWD: 31.654113,
+      UAH: 44.89037,
+      VND: 26472.589057
     };
     
     const baseRateInUSD = usdRates[base] || 1.0;
@@ -365,41 +428,26 @@ export class ExchangeRateService {
 
   // Fetch latest rates with a custom base
   public async fetchLatestRates(base: string): Promise<any> {
-    const isSupported = this.frankfurterSupported.has(base);
-    const apiBase = isSupported ? base : 'USD';
-    
-    const url = `https://api.frankfurter.dev/v1/latest?base=${apiBase}`;
+    const url = `https://open.er-api.com/v6/latest/${base}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
-    const allRatesUSD = this.getFallbackRates('USD');
-    
-    if (apiBase === 'USD') {
-      for (const code of Object.keys(data.rates)) {
-        allRatesUSD[code] = data.rates[code];
-      }
-    } else {
-      const usdInBase = data.rates['USD'] || (1.0 / (allRatesUSD[apiBase] || 1.0));
-      allRatesUSD['USD'] = 1.0;
-      for (const code of Object.keys(data.rates)) {
-        if (code === 'USD') continue;
-        allRatesUSD[code] = data.rates[code] / usdInBase;
-      }
-      allRatesUSD[apiBase] = 1.0 / usdInBase;
+    if (data.result !== 'success') {
+      throw new Error(`API error! status: ${data.result}`);
     }
-    
-    const targetBaseRateInUSD = allRatesUSD[base] || 1.0;
+
+    const rates = data.rates || {};
     const finalRates: { [key: string]: number } = {};
-    for (const code of Object.keys(allRatesUSD)) {
+    for (const code of Object.keys(rates)) {
       if (code === base) continue;
-      finalRates[code] = Number((allRatesUSD[code] / targetBaseRateInUSD).toFixed(5));
+      finalRates[code] = Number(rates[code].toFixed(5));
     }
     
     return {
       amount: 1.0,
       base: base,
-      date: data.date || new Date().toISOString().split('T')[0],
+      date: data.time_last_update_utc ? new Date(data.time_last_update_utc).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       rates: finalRates
     };
   }
@@ -525,5 +573,58 @@ export class ExchangeRateService {
     }
 
     return tickerItems;
+  }
+
+  public showToast(title: string, message: string, type: 'success' | 'warning' | 'info' = 'info'): void {
+    const id = Math.random().toString(36).substring(2, 9);
+    const toast: ToastMessage = { id, title, message, type };
+    this.toasts.update(list => [...list, toast]);
+    setTimeout(() => {
+      this.removeToast(id);
+    }, 5000);
+  }
+
+  public removeToast(id: string): void {
+    this.toasts.update(list => list.filter(t => t.id !== id));
+  }
+
+  public updateFavoriteThreshold(id: string, threshold: number | undefined, type: 'above' | 'below'): void {
+    const list = this.favorites().map(f => {
+      if (f.id === id) {
+        return { ...f, threshold, thresholdType: type };
+      }
+      return f;
+    });
+    this.saveFavorites(list);
+  }
+
+  private checkThresholds(): void {
+    const favsWithRates = this.favoritesWithRates();
+    for (const item of favsWithRates) {
+      if (item.threshold !== undefined && item.threshold !== null && item.threshold > 0) {
+        const currentRate = item.rate;
+        const threshold = item.threshold;
+        const type = item.thresholdType || 'above';
+        
+        let conditionMet = false;
+        if (type === 'above' && currentRate > threshold) {
+          conditionMet = true;
+        } else if (type === 'below' && currentRate < threshold) {
+          conditionMet = true;
+        }
+
+        if (conditionMet) {
+          const alertKey = `${item.id}-${threshold}-${type}-${conditionMet}`;
+          if (!this.triggeredAlerts.has(alertKey)) {
+            this.triggeredAlerts.add(alertKey);
+            this.showToast(
+              'Threshold Hit! 🔔',
+              `${item.base} to ${item.symbol} is currently ${currentRate.toFixed(4)} (${type === 'above' ? '>' : '<'} ${threshold})`,
+              'warning'
+            );
+          }
+        }
+      }
+    }
   }
 }

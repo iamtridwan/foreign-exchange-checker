@@ -13,6 +13,15 @@ import { ExchangeRateService, TickerItem } from '../../services/exchange-rate.se
 export class Header implements OnInit {
   public tickerItems = signal<TickerItem[]>([]);
   constructor(private fxService: ExchangeRateService) { }
+
+  public get theme() {
+    return this.fxService.theme;
+  }
+
+  public setTheme(newTheme: 'light' | 'dark' | 'system'): void {
+    this.fxService.setTheme(newTheme);
+  }
+
   async ngOnInit(): Promise<void> {
     try {
       const items = await this.fxService.fetchTickerData();

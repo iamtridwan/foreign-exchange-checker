@@ -1,5 +1,6 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Empty } from '../empty/empty';
 import { ExchangeRateService } from '../../services/exchange-rate.service';
 
@@ -10,6 +11,7 @@ import { ExchangeRateService } from '../../services/exchange-rate.service';
   styleUrl: './compare.css',
 })
 export class Compare {
+  private router = inject(Router);
   public title = 'No comparison available';
   public description = 'Enter an amount in SEND above to see what your money is worth in other currencies.';
 
@@ -88,5 +90,11 @@ export class Compare {
     return (code === 'JPY' || code === 'BDT' || code === 'KRW' || code === 'VND' || code === 'IDR' || code === 'LBP' || code === 'HUF')
       ? '1.0-0'
       : '1.2-2';
+  }
+
+  public selectComparison(baseCode: string, targetCode: string): void {
+    this.fxService.sendCurrency.set(baseCode);
+    this.fxService.receiveCurrency.set(targetCode);
+    this.router.navigate(['/history']);
   }
 }

@@ -28,7 +28,7 @@ export class RateHistoryChartComponent implements OnInit, OnChanges {
   private readonly topOffset = 10;
 
   // Selected range tab
-  public ranges = ['1D', '1W', '1M', '3M', '1Y', '5Y'];
+  public ranges = ['7D', '1M', '3M', '1Y'];
   public selectedRange = signal<string>('1M');
 
   // Load and error states
@@ -202,9 +202,7 @@ export class RateHistoryChartComponent implements OnInit, OnChanges {
 
   private getStartDate(range: string): string {
     const d = new Date();
-    if (range === '1D') {
-      d.setDate(d.getDate() - 3); // Pull 3 days to guarantee at least 2 business days from ECB
-    } else if (range === '1W') {
+    if (range === '7D') {
       d.setDate(d.getDate() - 7);
     } else if (range === '1M') {
       d.setMonth(d.getMonth() - 1);
@@ -212,8 +210,6 @@ export class RateHistoryChartComponent implements OnInit, OnChanges {
       d.setMonth(d.getMonth() - 3);
     } else if (range === '1Y') {
       d.setFullYear(d.getFullYear() - 1);
-    } else if (range === '5Y') {
-      d.setFullYear(d.getFullYear() - 5);
     }
     return d.toISOString().split('T')[0];
   }

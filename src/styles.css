@@ -11,15 +11,15 @@
   --color-lime-800: #283300;
   --color-green-500: #42EB05;
   --color-red-500: #FF4141;
-  --color-neutral-900: #0A0A0A;
-  --color-neutral-700: #171719;
-  --color-neutral-600: #202022;
-  --color-neutral-500: #2E2E2E;
-  --color-neutral-400: #3D3D3D;
-  --color-neutral-300: #454547;
-  --color-neutral-200: #9D9D9D;
-  --color-neutral-100: #C6C6C6;
-  --color-neutral-50: #FFFFFF;
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-50: var(--neutral-50);
 
   /* Custom text sizes registered with Tailwind v4 for responsive classes (e.g. md:text-16) */
   --text-10: var(--font-xxsmall);
@@ -39,6 +39,17 @@
 }
 
 :root {
+  --neutral-900: #0A0A0A;
+  --neutral-700: #171719;
+  --neutral-600: #202022;
+  --neutral-500: #2E2E2E;
+  --neutral-400: #3D3D3D;
+  --neutral-300: #454547;
+  --neutral-200: #9D9D9D;
+  --neutral-100: #C6C6C6;
+  --neutral-50: #FFFFFF;
+  --chart-grid-line: #1e1e24;
+
   --border-radius-4: 4px;
   --border-radius-8: 8px;
   --border-radius-12: 12px;
@@ -55,25 +66,72 @@
   --font-xxsmall: 10px;
 }
 
+.light-theme {
+  /* Inherited custom base variables */
+  --neutral-900: #E5E7EB; /* Grayish background for distinct card contrast */
+  --neutral-700: #FFFFFF; /* Pure white card background */
+  --neutral-600: #F3F4F6; /* Light gray input background */
+  --neutral-500: #D1D5DB; /* Grayish controls/borders */
+  --neutral-400: #9CA3AF; /* Border lines */
+  --neutral-300: #6B7280; /* Grid lines / secondary text */
+  --neutral-200: #4B5563; /* Medium text */
+  --neutral-100: #1F2937; /* Darker body text */
+  --neutral-50: #111827;  /* Headings/headings text */
+
+  /* Direct overrides for Tailwind v4 theme namespace components */
+  --color-neutral-900: #E5E7EB;
+  --color-neutral-700: #FFFFFF;
+  --color-neutral-600: #F3F4F6;
+  --color-neutral-500: #D1D5DB;
+  --color-neutral-400: #9CA3AF;
+  --color-neutral-300: #6B7280;
+  --color-neutral-200: #4B5563;
+  --color-neutral-100: #1F2937;
+  --color-neutral-50: #111827;
+
+  /* Direct overrides for gray classes (e.g. bg-gray-700, bg-gray-600) to align with neutral variables */
+  --color-gray-900: #E5E7EB;
+  --color-gray-700: #FFFFFF;
+  --color-gray-600: #F3F4F6;
+  --color-gray-500: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-300: #6B7280;
+  --color-gray-200: #4B5563;
+  --color-gray-100: #1F2937;
+  --color-gray-50: #111827;
+
+  /* Graphic and accents elements */
+  --color-lime-800: #ECFDF5;
+  --chart-grid-line: #D1D5DB;
+}
+
+.logo-img {
+  transition: filter 0.2s ease;
+}
+
+.light-theme .logo-img {
+  filter: invert(1);
+}
+
 @layer utilities {
 
-  /* Scrollbars styling for a premium dark UI feel */
+  /* Scrollbars styling for a premium theme-aware UI feel */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #0d0d0d;
+    background: var(--color-neutral-900);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #27272a;
+    background: var(--color-neutral-500);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #BEF264;
+    background: var(--color-neon-lime);
   }
 }
 
@@ -102,7 +160,7 @@
 }
 
 .text-dark {
-  color: var(--color-neutral-900);
+  color: #0A0A0A;
 }
 
 .text-dark-400 {
@@ -263,4 +321,19 @@
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(-1rem) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

@@ -1,7 +1,47 @@
 <div class="w-full py-3 ">
     <div class="px-4 md:px-8 mb-4 flex flex-row items-center justify-between">
-        <img src="images/logo.svg" alt="FX_CHECKER LOGO" class="max-w-sm md:max-w-md">
-        <p class="text-gray text-10 md:text-16">55 CURRENCIES · EOD · ECB DATA</p>
+        <img src="images/logo.svg" alt="FX_CHECKER LOGO" class="max-w-sm md:max-w-md logo-img">
+        <div class="flex items-center gap-3 md:gap-5">
+            <p class="text-gray text-10 md:text-14 hidden sm:block">55 CURRENCIES · EOD · ECB DATA</p>
+            <div class="flex items-center gap-0.5 bg-neutral-600 p-0.5 rounded-full border border-neutral-400 select-none">
+                <button type="button" (click)="setTheme('light')" 
+                    [class.bg-secondary]="theme() === 'light'" 
+                    [class.text-dark]="theme() === 'light'" 
+                    [class.text-neutral-200]="theme() !== 'light'"
+                    class="px-2.5 py-1 rounded-full text-10 font-mono transition-all duration-200 hover:opacity-80 flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                    title="Light theme" aria-label="Switch to Light theme">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                            d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                    </svg>
+                    <span class="hidden md:inline">LIGHT</span>
+                </button>
+                <button type="button" (click)="setTheme('dark')" 
+                    [class.bg-secondary]="theme() === 'dark'" 
+                    [class.text-dark]="theme() === 'dark'" 
+                    [class.text-neutral-200]="theme() !== 'dark'"
+                    class="px-2.5 py-1 rounded-full text-10 font-mono transition-all duration-200 hover:opacity-80 flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                    title="Dark theme" aria-label="Switch to Dark theme">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    <span class="hidden md:inline">DARK</span>
+                </button>
+                <button type="button" (click)="setTheme('system')" 
+                    [class.bg-secondary]="theme() === 'system'" 
+                    [class.text-dark]="theme() === 'system'" 
+                    [class.text-neutral-200]="theme() !== 'system'"
+                    class="px-2.5 py-1 rounded-full text-10 font-mono transition-all duration-200 hover:opacity-80 flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime"
+                    title="System default theme" aria-label="Switch to System theme">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="hidden md:inline">SYSTEM</span>
+                </button>
+            </div>
+        </div>
     </div>
     <div class="flex flex-row items-center justify-start">
         <p class="text-dark bg-secondary m-0 px-3 md:px-6 py-2 text-12 md:text-14 flex items-center">
