@@ -30,10 +30,10 @@ Here are the planned feature enhancements to take the Foreign Exchange Checker t
   - Add a status row showing a neon-green pulse indicator stating: `"Live rates synced 12s ago"`.
   - Include a spinner manual refresh button.
 
-## 5. CSV/PDF Logs Export
+## 5. CSV/PDF Logs Export [COMPLETED]
 - **Objective**: Enable travel expense tracking or accounting logging.
 - **Details**:
-  - Add an `EXPORT CSV` button in the **Conversion Log** header.
+  - Add an `EXPORT CSV` button in the **Conversion Log** header (implemented as a premium EXPORT dropdown with both CSV and PDF options).
   - Download a clean sheet detailing transaction dates, currency codes, and exact converted amounts.
 
 ## 6. Theme Changer (Dark, Light, and System Modes)
