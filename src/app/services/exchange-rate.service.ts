@@ -184,6 +184,13 @@ export class ExchangeRateService {
   public toasts = signal<ToastMessage[]>([]);
   private triggeredAlerts = new Set<string>();
 
+  public ratesMap = signal<{ [key: string]: number }>({});
+  public isLoadingRates = signal<boolean>(false);
+  public ratesError = signal<boolean>(false);
+  public lastSyncTime = signal<number>(Date.now());
+  public autoRefreshEnabled = signal<boolean>(false);
+  private autoRefreshIntervalId: any = null;
+
   // Cached USD-based rates for global ticker/favorites calculations
   public latestRatesUSD = signal<{ [key: string]: number }>({});
   public prevRatesUSD = signal<{ [key: string]: number }>({});
@@ -249,6 +256,8 @@ export class ExchangeRateService {
     effect(() => {
       this.checkThresholds();
     });
+
+    this.setupAutoRefreshTimer();
   }
 
   private loadFromStorage(): void {
@@ -264,6 +273,9 @@ export class ExchangeRateService {
 
       const themeVal = localStorage.getItem('fx_theme') as 'light' | 'dark' | 'system' | null;
       if (themeVal) this.theme.set(themeVal);
+
+      const autoRefresh = localStorage.getItem('fx_auto_refresh');
+      if (autoRefresh) this.autoRefreshEnabled.set(autoRefresh === 'true');
     } catch (e) {
       console.error('Failed to load from storage', e);
     }
@@ -625,6 +637,50 @@ export class ExchangeRateService {
           }
         }
       }
+    }
+  }
+
+  public async refreshRates(): Promise<void> {
+    const base = this.sendCurrency();
+    if (!base) return;
+
+    this.isLoadingRates.set(true);
+    this.ratesError.set(false);
+
+    try {
+      const res = await this.fetchLatestRates(base);
+      const rates = { ...res.rates, [base]: 1.0 };
+      this.ratesMap.set(rates);
+      this.lastSyncTime.set(Date.now());
+      
+      // Sync ticker data to keep other components/favorites fresh
+      await this.fetchTickerData();
+    } catch (e) {
+      console.warn('API error during refresh, using fallback rates', e);
+      this.ratesError.set(true);
+      const fallback = this.getFallbackRates(base);
+      this.ratesMap.set(fallback);
+      this.lastSyncTime.set(Date.now());
+    } finally {
+      this.isLoadingRates.set(false);
+    }
+  }
+
+  public toggleAutoRefresh(enabled: boolean): void {
+    this.autoRefreshEnabled.set(enabled);
+    localStorage.setItem('fx_auto_refresh', enabled ? 'true' : 'false');
+    this.setupAutoRefreshTimer();
+  }
+
+  public setupAutoRefreshTimer(): void {
+    if (this.autoRefreshIntervalId) {
+      clearInterval(this.autoRefreshIntervalId);
+      this.autoRefreshIntervalId = null;
+    }
+    if (this.autoRefreshEnabled()) {
+      this.autoRefreshIntervalId = setInterval(() => {
+        this.refreshRates();
+      }, 60000); // 60 seconds
     }
   }
 }

@@ -293,7 +293,7 @@
         <hr class="border-t-2 border-dashed border-neutral-500 my-6 w-full" />
 
         <!-- Bottom Actions Row -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2 pb-2 md:px-4 md:pb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 pb-5 pt-2 md:px-6 md:pb-6">
             <!-- Rate Text (1 USD = 0.8530 EUR) -->
             <div class="text-neutral-100 text-12 md:text-14 font-mono select-none text-center md:text-left">
                 1 {{ sendCurrency() }} = {{ liveRate() | number:'1.2-4' }} {{ receiveCurrency() }}
@@ -324,6 +324,46 @@
                 <button type="button" (click)="logConversion()"
                     class="border border-secondary text-white hover:bg-secondary hover:text-dark font-mono font-bold text-10 md:text-12 uppercase px-4 py-2.5 rounded-12 bg-transparent transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime">
                     LOG CONVERSION
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Updates Pulse Ticker Row -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-3 bg-neutral-600/30 border-t border-neutral-600/50 rounded-b-24">
+            <div class="flex items-center gap-3 select-none">
+                <!-- Pulse Indicator Dot -->
+                <div class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [class.bg-green-500]="!fxService.ratesError()" [class.bg-red-500]="fxService.ratesError()"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5" [class.bg-green-500]="!fxService.ratesError()" [class.bg-red-500]="fxService.ratesError()"></span>
+                </div>
+                <!-- Status Text -->
+                <span class="text-10 md:text-11 font-mono text-neutral-200 uppercase tracking-wider">
+                    {{ fxService.ratesError() ? 'Sync failed. Fallback active.' : getSyncStatusText() }}
+                </span>
+            </div>
+
+            <!-- Controls (Auto-refresh Toggle and Manual Refresh Button) -->
+            <div class="flex items-center gap-4">
+                <!-- Auto-refresh Toggle Switch -->
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <span class="text-10 md:text-11 font-mono font-bold text-neutral-200 uppercase tracking-wider">Auto Refresh</span>
+                    <div class="relative">
+                        <input type="checkbox" [ngModel]="fxService.autoRefreshEnabled()" (ngModelChange)="onToggleAutoRefresh($event)" class="sr-only peer" />
+                        <div class="w-9 h-5 bg-neutral-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+                    </div>
+                </label>
+
+                <!-- Divider -->
+                <div class="w-px h-4 bg-neutral-500/50 hidden sm:block"></div>
+
+                <!-- Manual Refresh Button -->
+                <button type="button" (click)="onManualRefresh()" [disabled]="fxService.isLoadingRates()"
+                    class="flex items-center gap-1.5 font-mono font-bold text-10 md:text-11 uppercase px-3 py-1.5 rounded-8 border border-neutral-400 hover:bg-neutral-500/20 text-white transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neon-lime disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-3.5 h-3.5" [class.animate-spin]="fxService.isLoadingRates()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.2" />
+                    </svg>
+                    <span>Refresh</span>
                 </button>
             </div>
         </div>

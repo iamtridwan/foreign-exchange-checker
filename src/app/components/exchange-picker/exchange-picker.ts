@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, effect, WritableSignal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExchangeRateService, CurrencyInfo } from '../../services/exchange-rate.service';
@@ -10,7 +10,7 @@ import { ExchangeRateService, CurrencyInfo } from '../../services/exchange-rate.
   templateUrl: './exchange-picker.html',
   styleUrl: './exchange-picker.css',
 })
-export class ExchangePicker implements OnInit {
+export class ExchangePicker implements OnInit, OnDestroy {
   // Picker visibility and search
   public isSendPickerOpen = signal<boolean>(false);
   public isReceivePickerOpen = signal<boolean>(false);
@@ -30,11 +30,6 @@ export class ExchangePicker implements OnInit {
     return (amt * this.liveRate()).toFixed(2);
   });
 
-  // Rates mapping
-  public ratesMap = signal<{ [key: string]: number }>({});
-  public isLoading = signal<boolean>(false);
-  public isError = signal<boolean>(false);
-
   // Mapped list from service
   public currenciesList: CurrencyInfo[] = [];
 
@@ -53,7 +48,7 @@ export class ExchangePicker implements OnInit {
 
   // Live exchange rate
   public liveRate = computed(() => {
-    return this.ratesMap()[this.receiveCurrency()] || 0.0;
+    return this.fxService.ratesMap()[this.receiveCurrency()] || 0.0;
   });
 
   // Check if active pair is favorited
@@ -80,42 +75,56 @@ export class ExchangePicker implements OnInit {
     return list.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
   });
 
+  // Dynamic relative sync time signals
+  public currentTime = signal<number>(Date.now());
+  private clockIntervalId: any = null;
+
+  public getSyncStatusText = computed(() => {
+    const lastSync = this.fxService.lastSyncTime();
+    const now = this.currentTime();
+    const diffSeconds = Math.max(0, Math.floor((now - lastSync) / 1000));
+    
+    if (diffSeconds < 5) return 'Just synced';
+    if (diffSeconds < 60) return `Live rates synced ${diffSeconds}s ago`;
+    const mins = Math.floor(diffSeconds / 60);
+    return `Live rates synced ${mins}m ago`;
+  });
+
   constructor(public fxService: ExchangeRateService) {
     this.sendCurrency = this.fxService.sendCurrency;
     this.receiveCurrency = this.fxService.receiveCurrency;
     this.sendAmount = this.fxService.sendAmount;
     // Re-fetch rates automatically whenever base currency changes
     effect(() => {
-      this.fetchRates();
+      this.fxService.refreshRates();
     });
   }
 
   ngOnInit(): void {
     this.currenciesList = this.fxService.getSupportedCurrencies();
-    // Pre-populate with fallback rates
-    this.ratesMap.set(this.fxService.getFallbackRates(this.sendCurrency()));
-    this.fetchRates();
+    // Pre-populate service ratesMap if empty
+    if (Object.keys(this.fxService.ratesMap()).length === 0) {
+      this.fxService.ratesMap.set(this.fxService.getFallbackRates(this.sendCurrency()));
+    }
+    this.fxService.refreshRates();
+
+    this.clockIntervalId = setInterval(() => {
+      this.currentTime.set(Date.now());
+    }, 1000);
   }
 
-  public async fetchRates(): Promise<void> {
-    const base = this.sendCurrency();
-    if (!base) return;
-
-    this.isLoading.set(true);
-    this.isError.set(false);
-
-    try {
-      const res = await this.fxService.fetchLatestRates(base);
-      const rates = { ...res.rates, [base]: 1.0 };
-      this.ratesMap.set(rates);
-    } catch (e) {
-      console.warn('API error, falling back to static offline rates', e);
-      this.isError.set(true);
-      const fallback = this.fxService.getFallbackRates(base);
-      this.ratesMap.set(fallback);
-    } finally {
-      this.isLoading.set(false);
+  ngOnDestroy(): void {
+    if (this.clockIntervalId) {
+      clearInterval(this.clockIntervalId);
     }
+  }
+
+  public onToggleAutoRefresh(enabled: boolean): void {
+    this.fxService.toggleAutoRefresh(enabled);
+  }
+
+  public onManualRefresh(): void {
+    this.fxService.refreshRates();
   }
 
   public onSendAmountChange(val: string): void {
